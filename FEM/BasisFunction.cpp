@@ -410,4 +410,48 @@ Eigen::VectorXd BasisFunction_3D_Hexahedron_Linear::getdN(Eigen::VectorXd coordi
 	return dN;
 }
 
+BasisFunction_1D_Hermite::BasisFunction_1D_Hermite()
+{
+	mOrder = 3;
+	mDim = 1;
+}
 
+BasisFunction_1D_Hermite::~BasisFunction_1D_Hermite()
+{
+}
+
+Eigen::VectorXd BasisFunction_1D_Hermite::getN(Eigen::VectorXd coordinates)
+{
+	double xi = coordinates(0);
+	double h = coordinates(1);
+	Eigen::VectorXd N(4);
+	N(0) = 0.25 * (2. - 3. * xi + xi * xi * xi);
+	N(1) = h / 8. * (1. - xi - xi * xi + xi * xi * xi);
+	N(2) = 0.25 * (2. + 3. * xi - xi * xi * xi);
+	N(3) = h / 8. * (-1. - xi + xi * xi + xi * xi * xi);
+	return N;
+}
+
+Eigen::VectorXd BasisFunction_1D_Hermite::getdN(Eigen::VectorXd coordinates)
+{
+	double xi = coordinates(0);
+	double h = coordinates(1);
+	Eigen::VectorXd dN(4);
+	dN(0) = 0.75 * (-1. + xi * xi);
+	dN(1) = h / 8. * (-1. - 2. * xi + 3. * xi * xi);
+	dN(2) = 0.75 * (1. - xi * xi);
+	dN(3) = h / 8. * (-1. + 2. * xi + 3. * xi * xi);
+	return dN;
+}
+
+Eigen::VectorXd BasisFunction_1D_Hermite::getd2N(Eigen::VectorXd coordinates)
+{
+	double xi = coordinates(0);
+	double h = coordinates(1);
+	Eigen::VectorXd d2N(4);
+	d2N(0) = 1.5 * xi;
+	d2N(1) = h / 4. * (-1 + 3. * xi);
+	d2N(2) = -1.5 * xi;
+	d2N(3) = h / 4. * (1 + 3. * xi);
+	return d2N;
+}

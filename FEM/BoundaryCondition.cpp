@@ -53,6 +53,7 @@ DistributedLoad::~DistributedLoad()
 {
 }
 
+/*
 EvenlyDistributedSpring_1st::EvenlyDistributedSpring_1st(int index, int elementIndex, double k) :EvenlyDistributedSpring(index, elementIndex, k)
 {
 }
@@ -67,6 +68,7 @@ Eigen::MatrixXd EvenlyDistributedSpring_1st::getStiffnessMatrix(double length)
 	stiffnessMatrix << mValue * length / 3.0, mValue * length / 6.0, mValue * length / 6.0, mValue * length / 3.0;
 	return stiffnessMatrix;
 }
+*/
 
 LinearlyDistributedLoad::LinearlyDistributedLoad(int index, int elementIndex, double startValue, double endValue) :BoundaryCondition(index, BoundaryConditionType::LOAD_DISTRIBUTED_LINEARLY, elementIndex, startValue)
 {
@@ -93,6 +95,7 @@ Eigen::VectorXd LinearlyDistributedLoad_1st::getElementLoadVector(double length)
 	return loadVector;
 }
 
+/*
 EvenlyDistributedSpring_2nd::EvenlyDistributedSpring_2nd(int index, int elementIndex, double k) :EvenlyDistributedSpring(index, elementIndex, k)
 {
 }
@@ -112,6 +115,7 @@ Eigen::MatrixXd EvenlyDistributedSpring_2nd::getStiffnessMatrix(double length)
 	stiffnessMatrix *= mValue * length / 30.0;
 	return stiffnessMatrix;
 }
+*/
 
 LinearlyDistributedLoad_2nd::LinearlyDistributedLoad_2nd(int index, int elementIndex, double startValue, double endValue) :LinearlyDistributedLoad(index, elementIndex, startValue, endValue)
 {
@@ -143,4 +147,21 @@ EvenlyDistributedSpring::EvenlyDistributedSpring(int index, int elementIndex, do
 
 EvenlyDistributedSpring::~EvenlyDistributedSpring()
 {
+}
+
+Eigen::MatrixXd EvenlyDistributedSpring::getStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat, double elementLength)
+{
+	int n = basis->mOrder;
+	int nGauss = quadrature->mXi.size();
+	Eigen::VectorXd w = quadrature->mWeight;
+	Eigen::VectorXd N;
+	Eigen::MatrixXd Kbc = Eigen::MatrixXd::Zero(n + 1, n + 1);
+	for (int i = 0; i < nGauss; i++)
+	{
+		Eigen::VectorXd xi(1);
+		xi << quadrature->mXi[i];
+		N = basis->getN(xi);
+		Kbc += w(i) * N * N.transpose();
+	}
+	return Kbc * mValue * elementLength / 2.;
 }

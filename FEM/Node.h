@@ -6,16 +6,15 @@
 class Node
 {
 public:
-	Node(int index, double x, bool isFixed);
+	Node(int index, int dim, Eigen::VectorXd x, bool isFixed, bool hasRotation);
 	~Node();
 
 	void fixDof();
 
-	int mIndex;
-	double mX;
+	int mIndex, mDim;
+	Eigen::VectorXd mX, mU;
 	std::unordered_set<int> mElementIndices;
-	bool mIsFixed;
-	int mDofIndex;
-	double mU;
+	bool mIsFixed, mHasRotation;
+	Eigen::VectorXi mDofIndex;
 };
 

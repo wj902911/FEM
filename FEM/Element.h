@@ -20,6 +20,10 @@ public:
 	virtual void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, 
 		                                std::shared_ptr<Quadrature> quadrature, 
 										std::shared_ptr<Material> mat) = 0;
+
+	virtual void computeMassMatrix(std::shared_ptr<BasisFunction> basis,
+		                                std::shared_ptr<Quadrature> quadrature,
+		                                std::shared_ptr<Material> mat) = 0;
 	
 	virtual void computeInternalForce(std::shared_ptr<BasisFunction> basis, 
 		                              int outputNumber, 
@@ -65,6 +69,10 @@ public:
 		                        std::shared_ptr<Quadrature> quadrature, 
 								std::shared_ptr<Material> mat);
 	
+	void computeMassMatrix(std::shared_ptr<BasisFunction> basis,
+		                   std::shared_ptr<Quadrature> quadrature,
+		                   std::shared_ptr<Material> mat);
+	
 	void computeInternalForce(std::shared_ptr<BasisFunction> basis, 
 							  int outputNumber, 
 							  std::shared_ptr<Material> mat);
@@ -92,6 +100,10 @@ public:
 	void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, 
 								std::shared_ptr<Quadrature> quadrature, 
 								std::shared_ptr<Material> mat);
+
+	void computeMassMatrix(std::shared_ptr<BasisFunction> basis,
+		                   std::shared_ptr<Quadrature> quadrature,
+		                   std::shared_ptr<Material> mat);
 	
 	void computeInternalForce(std::shared_ptr<BasisFunction> basis, 
 							  int outputNumber, 

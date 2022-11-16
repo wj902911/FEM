@@ -107,6 +107,17 @@ public:
 	Eigen::VectorXd getdN(Eigen::VectorXd coordinates);
 };
 
+class BasisFunction_1D_Hermite : public BasisFunction
+{
+public:
+	BasisFunction_1D_Hermite();
+	~BasisFunction_1D_Hermite();
+
+	Eigen::VectorXd getN(Eigen::VectorXd coordinates);
+	Eigen::VectorXd getdN(Eigen::VectorXd coordinates);
+	Eigen::VectorXd getd2N(Eigen::VectorXd coordinates);
+};
+
 class BasisFunction_2D_Triangle_Linear : public BasisFunction
 {
 public:

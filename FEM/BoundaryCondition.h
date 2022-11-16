@@ -1,6 +1,12 @@
 #pragma once
 
 #include <eigen/Eigen/Core>
+#include "BasisFunction.h"
+#include "Material.h"
+
+class BasisFunction;
+class Material;
+class SextionAreaFunction;
 
 enum BoundaryConditionType
 {
@@ -107,15 +113,19 @@ public:
 	EvenlyDistributedSpring(int index, int elementIndex, double k);
 	~EvenlyDistributedSpring();
 	
-	virtual Eigen::MatrixXd getStiffnessMatrix(double length) = 0;
+	virtual Eigen::MatrixXd getStiffnessMatrix(std::shared_ptr<BasisFunction> basis,
+		                                       std::shared_ptr<Quadrature> quadrature,
+		                                       std::shared_ptr<Material> mat,
+	                                           double elementLength);
 };
 
+/*
 class EvenlyDistributedSpring_1st : public EvenlyDistributedSpring
 {
 public:
 	EvenlyDistributedSpring_1st(int index, int elementIndex, double k);
 	~EvenlyDistributedSpring_1st();
-	
+
 	Eigen::MatrixXd getStiffnessMatrix(double length);
 };
 
@@ -127,4 +137,6 @@ public:
 
 	Eigen::MatrixXd getStiffnessMatrix(double length);
 };
+*/
+
 
