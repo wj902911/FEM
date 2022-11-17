@@ -37,8 +37,10 @@ public:
 class NodeLoad : public BoundaryCondition
 {
 public:
-	NodeLoad(int index, int nodeIndex, double value);
+	NodeLoad(int index, int nodeIndex, double value, int direction );
 	~NodeLoad();
+
+	int mDirection;
 };
 
 class ElementLoad :public BoundaryCondition
@@ -87,8 +89,10 @@ public:
 class Displacement : public BoundaryCondition
 {
 public:
-	Displacement(int index, int nodeIndex, double value);
+	Displacement(int index, int nodeIndex, double value, int direction);
 	~Displacement();
+	
+	int mDirection;
 };
 
 class Spring : public BoundaryCondition
@@ -103,8 +107,10 @@ public:
 class ConcentrateSpring : public Spring
 {
 public:
-	ConcentrateSpring(int index, int nodeIndex, double k);
+	ConcentrateSpring(int index, int nodeIndex, double k, int direction);
 	~ConcentrateSpring();
+	
+	int mDirection;
 };
 
 class EvenlyDistributedSpring : public Spring
@@ -115,7 +121,6 @@ public:
 	
 	virtual Eigen::MatrixXd getStiffnessMatrix(std::shared_ptr<BasisFunction> basis,
 		                                       std::shared_ptr<Quadrature> quadrature,
-		                                       std::shared_ptr<Material> mat,
 	                                           double elementLength);
 };
 

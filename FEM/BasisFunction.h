@@ -85,6 +85,9 @@ public:
 
 	int mDim;
 	int mOrder;
+	int mNumFunctions;
+	int mNumNodes;
+	Eigen::VectorXi mNumDofEachNode;
 };
 
 class BasisFunction_1D_Linear : public BasisFunction

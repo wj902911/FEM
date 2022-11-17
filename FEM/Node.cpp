@@ -1,6 +1,6 @@
 #include "Node.h"
 
-Node::Node(int index, int dim, Eigen::VectorXd x, bool isFixed, bool hasRotation)
+Node::Node(int index, int dim, Eigen::VectorXd x, Eigen::VectorXi isFixed, bool hasRotation)
 {
 	mIndex = index;
 	mDim = dim;
@@ -25,5 +25,5 @@ Node::~Node()
 
 void Node::fixDof()
 {
-	mIsFixed = true;
+	mIsFixed = Eigen::VectorXi::Constant(mIsFixed.size(), 1);
 }

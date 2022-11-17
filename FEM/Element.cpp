@@ -7,6 +7,7 @@ Element::Element(int index, int materialIndex, int basisFunctionIndex, int quadr
 	mMaterialIndex = materialIndex;
 	mBasisFunctionIndex = basisFunctionIndex;
 	mQuadratureIndex = quadratureIndex;
+	mLength = 0;
 }
 
 Element::~Element()
@@ -29,7 +30,6 @@ void Element::setSize(int size)
 Element_1D::Element_1D(int index, int materailIndex, double A, Eigen::VectorXi endNodeIndex, int basisFunctionIndex, int quadratureIndex) :Element(index, materailIndex, basisFunctionIndex, quadratureIndex)
 {
 	mSectionArea = A;
-	mLength = 0;
 	mEndNodeIndex = endNodeIndex;
 }
 
@@ -116,7 +116,6 @@ double Element_1D::getdU(double xi, std::shared_ptr<BasisFunction> basis)
 Element_1D_ununiformSection::Element_1D_ununiformSection(int index, int materailIndex, std::shared_ptr<SextionAreaFunction> A, Eigen::VectorXi endNodeIndex, Eigen::VectorXd nodalCoordinates, int basisFunctionIndex, int quadratureIndex) :Element(index, materailIndex, basisFunctionIndex, quadratureIndex)
 {
 	mSectionArea = A;
-	mLength = 0;
 	mEndNodeIndex = endNodeIndex;
 	mNodalCoordinates = nodalCoordinates;
 }
@@ -162,7 +161,7 @@ void Element_1D_ununiformSection::computeMassMatrix(std::shared_ptr<BasisFunctio
 		X << x(i);
 		Me += w(i) * mSectionArea->getValue(X) * N * N.transpose();
 	}
-	mKe = mat->GetDensity() * mLength / 2. * Me;
+	mMe = mat->GetDensity() * mLength / 2. * Me;
 }
 
 void Element_1D_ununiformSection::computeInternalForce(std::shared_ptr<BasisFunction> basis, int outputNumber, std::shared_ptr<Material> mat)
@@ -205,4 +204,64 @@ double Element_1D_ununiformSection::getdU(double xi, std::shared_ptr<BasisFuncti
 	x << xi;
 	Eigen::VectorXd dphi = basis->getdN(x);
 	return 2.0 / mLength * dphi.transpose() * mNodalU;
+}
+
+Element_1D_Beam::Element_1D_Beam(int index, int materailIndex, double A, double I, Eigen::VectorXi endNodeIndex, int basisFunctionIndex, int quadratureIndex) :Element(index, materailIndex, basisFunctionIndex, quadratureIndex)
+{
+	mSectionArea = A;
+	mI = I;
+	mEndNodeIndex = endNodeIndex;
+}
+
+Element_1D_Beam::~Element_1D_Beam()
+{
+}
+
+void Element_1D_Beam::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
+{
+	int nDof = basis->mNumDofEachNode.sum();
+	int nGauss = quadrature->mXi.size();
+	Eigen::VectorXd w = quadrature->mWeight;
+	Eigen::VectorXd d2N;
+	Eigen::MatrixXd Ke = Eigen::MatrixXd::Zero(nDof, nDof);
+	std::shared_ptr<BasisFunction_1D_Hermite> pBasis = std::dynamic_pointer_cast<BasisFunction_1D_Hermite>(basis);
+	for (int i = 0; i < nGauss; i++)
+	{
+		Eigen::VectorXd xi(1);
+		xi << quadrature->mXi[i];
+		d2N = pBasis->getd2N(xi);
+		Ke += w(i) * d2N * d2N.transpose();
+	}
+	mKe = 8. * mat->GetE() * mI / pow(mLength, 3) * Ke;
+}
+
+void Element_1D_Beam::computeMassMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
+{
+	int nDof = basis->mNumDofEachNode.sum();
+	int nGauss = quadrature->mXi.size();
+	Eigen::VectorXd w = quadrature->mWeight;
+	Eigen::VectorXd N;
+	Eigen::MatrixXd Me = Eigen::MatrixXd::Zero(nDof, nDof);
+	for (int i = 0; i < nGauss; i++)
+	{
+		Eigen::VectorXd xi(1);
+		xi << quadrature->mXi[i];
+		N = basis->getN(xi);
+		Me += w(i) * N * N.transpose();
+	}
+	mKe = mat->GetDensity() * mSectionArea * mLength / 2. * Me;
+}
+
+void Element_1D_Beam::computeInternalForce(std::shared_ptr<BasisFunction> basis, int outputNumber, std::shared_ptr<Material> mat)
+{
+}
+
+double Element_1D_Beam::getU(double xi, std::shared_ptr<BasisFunction> basis)
+{
+	return 0.0;
+}
+
+double Element_1D_Beam::getdU(double xi, std::shared_ptr<BasisFunction> basis)
+{
+	return 0.0;
 }

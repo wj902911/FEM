@@ -12,6 +12,9 @@ BasisFunction_1D_Linear::BasisFunction_1D_Linear()
 {
 	mOrder = 1;
 	mDim = 1;
+	mNumFunctions = 2;
+	mNumNodes = 2;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 1);
 }
 
 BasisFunction_1D_Linear::~BasisFunction_1D_Linear()
@@ -39,6 +42,9 @@ BasisFunction_1D_Quadratic::BasisFunction_1D_Quadratic()
 {
 	mOrder = 2;
 	mDim = 1;
+	mNumFunctions = 3;
+	mNumNodes = 3;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 1);
 }
 
 BasisFunction_1D_Quadratic::~BasisFunction_1D_Quadratic()
@@ -69,6 +75,9 @@ BasisFunction_2D_Triangle_Linear::BasisFunction_2D_Triangle_Linear()
 {
 	mOrder = 1;
 	mDim = 2;
+	mNumFunctions = 3;
+	mNumNodes = 3;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 2);
 }
 
 BasisFunction_2D_Triangle_Linear::~BasisFunction_2D_Triangle_Linear()
@@ -102,6 +111,9 @@ BasisFunction_2D_Triangle_Quadratic::BasisFunction_2D_Triangle_Quadratic()
 {
 	mOrder = 2;
 	mDim = 2;
+	mNumFunctions = 6;
+	mNumNodes = 6;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 2);
 }
 
 BasisFunction_2D_Triangle_Quadratic::~BasisFunction_2D_Triangle_Quadratic()
@@ -146,6 +158,9 @@ BasisFunction_2D_Quad_Linear::BasisFunction_2D_Quad_Linear()
 {
 	mOrder = 1;
 	mDim = 2;
+	mNumFunctions = 4;
+	mNumNodes = 4;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 2);
 }
 
 BasisFunction_2D_Quad_Linear::~BasisFunction_2D_Quad_Linear()
@@ -184,6 +199,9 @@ BasisFunction_2D_Quad_Quadratic::BasisFunction_2D_Quad_Quadratic()
 {
 	mOrder = 2;
 	mDim = 2;
+	mNumFunctions = 9;
+	mNumNodes = 9;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 2);
 }
 
 BasisFunction_2D_Quad_Quadratic::~BasisFunction_2D_Quad_Quadratic()
@@ -237,6 +255,9 @@ BasisFunction_3D_Tetrahedron_Linear::BasisFunction_3D_Tetrahedron_Linear()
 {
 	mOrder = 1;
 	mDim = 3;
+	mNumFunctions = 4;
+	mNumNodes = 4;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 3);
 }
 
 BasisFunction_3D_Tetrahedron_Linear::~BasisFunction_3D_Tetrahedron_Linear()
@@ -278,6 +299,9 @@ BasisFunction_3D_Tetrahedron_Quadratic::BasisFunction_3D_Tetrahedron_Quadratic()
 {
 	mOrder = 2;
 	mDim = 3;
+	mNumFunctions = 10;
+	mNumNodes = 10;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 3);
 }
 
 BasisFunction_3D_Tetrahedron_Quadratic::~BasisFunction_3D_Tetrahedron_Quadratic()
@@ -346,6 +370,9 @@ BasisFunction_3D_Hexahedron_Linear::BasisFunction_3D_Hexahedron_Linear()
 {
 	mOrder = 1;
 	mDim = 3;
+	mNumFunctions = 8;
+	mNumNodes = 8;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 3);
 }
 
 BasisFunction_3D_Hexahedron_Linear::~BasisFunction_3D_Hexahedron_Linear()
@@ -414,6 +441,9 @@ BasisFunction_1D_Hermite::BasisFunction_1D_Hermite()
 {
 	mOrder = 3;
 	mDim = 1;
+	mNumFunctions = 4;
+	mNumNodes = 2;
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 2);
 }
 
 BasisFunction_1D_Hermite::~BasisFunction_1D_Hermite()

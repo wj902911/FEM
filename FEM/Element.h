@@ -41,7 +41,7 @@ public:
 	int mQuadratureIndex;
 
 	Eigen::VectorXi mEndNodeIndex;
-	Eigen::MatrixXd mKe;
+	Eigen::MatrixXd mKe, mMe;
 	Eigen::VectorXi mDofIndexes;
 	Eigen::VectorXd mNodalU;
 
@@ -117,4 +117,33 @@ public:
 	Eigen::VectorXd mNodalCoordinates;
 };
 
+class Element_1D_Beam :public Element
+{
+public:
+	Element_1D_Beam(int index,
+		            int materailIndex,
+		            double A,
+		            double I,
+		            Eigen::VectorXi endNodeIndex,
+		            int basisFunctionIndex = 0,
+		            int quadratureIndex = 0);
 
+	~Element_1D_Beam();
+
+	void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis,
+		                        std::shared_ptr<Quadrature> quadrature,
+		                        std::shared_ptr<Material> mat);
+
+	void computeMassMatrix(std::shared_ptr<BasisFunction> basis,
+		                   std::shared_ptr<Quadrature> quadrature,
+		                   std::shared_ptr<Material> mat);
+
+	void computeInternalForce(std::shared_ptr<BasisFunction> basis,
+		                      int outputNumber,
+		                      std::shared_ptr<Material> mat);
+
+	double getU(double xi, std::shared_ptr<BasisFunction> basis);
+	double getdU(double xi, std::shared_ptr<BasisFunction> basis);
+
+	double mSectionArea, mI;
+};

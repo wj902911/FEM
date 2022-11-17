@@ -12,16 +12,18 @@ BoundaryCondition::~BoundaryCondition()
 {
 }
 
-NodeLoad::NodeLoad(int index, int nodeIndex, double value):BoundaryCondition(index, BoundaryConditionType::LOAD_CONCENTRATE_NODE, nodeIndex, value)
+NodeLoad::NodeLoad(int index, int nodeIndex, double value, int dir):BoundaryCondition(index, BoundaryConditionType::LOAD_CONCENTRATE_NODE, nodeIndex, value)
 {
+	mDirection = dir;
 }
 
 NodeLoad::~NodeLoad()
 {
 }
 
-Displacement::Displacement(int index, int nodeIndex, double value):BoundaryCondition(index, BoundaryConditionType::DISPLACEMENT, nodeIndex, value)
+Displacement::Displacement(int index, int nodeIndex, double value, int direction):BoundaryCondition(index, BoundaryConditionType::DISPLACEMENT, nodeIndex, value)
 {
+	mDirection = direction;
 }
 
 Displacement::~Displacement()
@@ -133,8 +135,9 @@ Eigen::VectorXd LinearlyDistributedLoad_2nd::getElementLoadVector(double length)
 	return loadVector;
 }
 
-ConcentrateSpring::ConcentrateSpring(int index, int nodeIndex, double k):Spring(index, BoundaryConditionType::SPRING_CONCENTRATE, nodeIndex, k)
+ConcentrateSpring::ConcentrateSpring(int index, int nodeIndex, double k, int dir):Spring(index, BoundaryConditionType::SPRING_CONCENTRATE, nodeIndex, k)
 {
+	mDirection = dir;
 }
 
 ConcentrateSpring::~ConcentrateSpring()
@@ -149,7 +152,7 @@ EvenlyDistributedSpring::~EvenlyDistributedSpring()
 {
 }
 
-Eigen::MatrixXd EvenlyDistributedSpring::getStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat, double elementLength)
+Eigen::MatrixXd EvenlyDistributedSpring::getStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, double elementLength)
 {
 	int n = basis->mOrder;
 	int nGauss = quadrature->mXi.size();

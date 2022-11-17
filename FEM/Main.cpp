@@ -64,114 +64,59 @@ double Simpson(Eigen::VectorXd as, Eigen::VectorXd bs, Eigen::VectorXd fas, Eige
 int main()
 {
 	int nElements = 8;
-	int elementOrder = 1;
-	int outputNumber = 20;
-	outputNumber += 1;
+	int elementOrder = 3;
+	//int outputNumber = 20;
+	//outputNumber += 1;
 	double E = 1.;
-	double A0 = 1.;
+	double I = 1.;
+	double A = 1.;
 	double L = 1.;
-	double p0 = 1.;
-	double k2 = E * A0 / L;
-	double k1 = 2. * k2;
+	//double p0 = 1.;
+	//double k2 = E * A0 / L;
+	double Rho = 1;
+	double kf = 4. * E * I / pow(L, 4);
 	double h = L / nElements;
 
 	Core core;
-	core.setOutputNumber(outputNumber);
-	BodyForceFunction bodyForce(p0);
-	core.mBodyForceFunctions.emplace_back(make_shared<BodyForceFunction>(bodyForce));
+	//core.setOutputNumber(outputNumber);
+	//BodyForceFunction bodyForce(p0);
+	//core.mBodyForceFunctions.emplace_back(make_shared<BodyForceFunction>(bodyForce));
 	
 	Material material;
 	material.SetE(E);
+	material.SetDensity(Rho);
 	core.mMaterials.emplace_back(make_shared<Material>(material));
 
 	Quadrature quadrature_1D(1, elementOrder);
 	core.mQuadratures.emplace_back(make_shared<Quadrature>(quadrature_1D));
-	Quadrature quadrature_1D_raiseOrder1(1, elementOrder + 1);
-	core.mQuadratures.emplace_back(make_shared<Quadrature>(quadrature_1D_raiseOrder1));
 	
-	if (elementOrder == 1)
+	BasisFunction_1D_Hermite basisFunction;
+	core.mBasisFunctions.emplace_back(make_shared<BasisFunction_1D_Hermite>(basisFunction));
+	for (int i = 0; i < 2 * nElements; i++)
 	{
-		BasisFunction_1D_Linear basisFunction;
-		core.mBasisFunctions.emplace_back(make_shared<BasisFunction_1D_Linear>(basisFunction));
-		for (int i = 0; i < 2 * nElements; i++)
-		{
-			Node node(i, i * h, false);
-			core.mNodes.emplace_back(make_shared<Node>(node));
-		}
-		core.mNodes[0]->fixDof();
-		Node node(2 * nElements, 2. * L, true);
+		Eigen::VectorXd x(1);
+		x << i * h;
+		Eigen::VectorXi isFixed(2);
+		isFixed << 0, 0;
+		Node node(i, 1, x, isFixed, 1);
 		core.mNodes.emplace_back(make_shared<Node>(node));
 	}
-	else if (elementOrder == 2)
-	{
-		BasisFunction_1D_Quadratic basisFunction;
-		core.mBasisFunctions.emplace_back(make_shared<BasisFunction_1D_Quadratic>(basisFunction));
-		for (int i = 0; i < 4 * nElements; i++)
-		{
-			Node node(i, i* h / 2, false);
-			core.mNodes.emplace_back(make_shared<Node>(node));
-		}
-		core.mNodes[0]->fixDof();
-		Node node(4 * nElements, 2. * L, true);
-		core.mNodes.emplace_back(make_shared<Node>(node));
-	}
-	else
-	{
-		std::cout << "Element order not supported!" << std::endl;
-		return 0;
-	}
-	
-	SextionAreaFunction A(A0, L);
+	core.mNodes[0]->fixDof();
+	Eigen::VectorXd x(1);
+	x << 2. * L;
+	Eigen::VectorXi isFixed(2);
+	isFixed << 0, 0;
+	Node node(2 * nElements, 1, x, isFixed, 1);
+	core.mNodes.emplace_back(make_shared<Node>(node));
 
 	for (int i = 0; i < 2 * nElements; i++)
 	{
-		if (i < nElements)
-		{
-			if (elementOrder == 1)
-			{
-				Element_1D_ununiformSection element(i, 
-					                                0, 
-					                                make_shared<SextionAreaFunction>(A), 
-					                                Eigen::Vector2i(i, i + 1), 
-					                                Eigen::Vector2d(core.mNodes[i]->mX, core.mNodes[i + 1]->mX),
-				                                    0,
-					                                1);
-				
-				core.mElements.emplace_back(make_shared<Element_1D_ununiformSection>(element));
-			}
-			else if (elementOrder == 2)
-			{
-				Element_1D_ununiformSection element(i, 
-													0, 
-					                                make_shared<SextionAreaFunction>(A),
-													Eigen::Vector3i(2 * i, 2 * i + 1, 2 * i + 2),
-					                                Eigen::Vector2d(core.mNodes[2 * i]->mX, core.mNodes[2 * i + 2]->mX),
-					                                0,
-					                                1);
-				
-				core.mElements.emplace_back(make_shared<Element_1D_ununiformSection>(element));
-			}
-		}
-		else
-		{
-			if (elementOrder == 1)
-			{
-				Element_1D element(i, 0, A0 * 0.5, Eigen::Vector2i(i, i + 1), 0, 1);
-				core.mElements.emplace_back(make_shared<Element_1D>(element));
-			}
-			else if (elementOrder == 2)
-			{
-				Element_1D element(i, 0, A0 * 0.5, Eigen::Vector3i(2 * i, 2 * i + 1, 2 * i + 2), 0, 1);
-				core.mElements.emplace_back(make_shared<Element_1D>(element));
-			}
-		}
-		
+		Element_1D_Beam element(i, 0, A, I, Eigen::Vector2i(i, i + 1), 0, 1);
+		core.mElements.emplace_back(make_shared<Element_1D_Beam>(element));
 	}
 	
 	ConcentrateSpring Spring1(0, 0, k1);
 	core.mBoundaryConditions.emplace_back(make_shared<ConcentrateSpring>(Spring1));
-	ConcentrateSpring Spring2(1, core.mNodes.size() - 1, k2);
-	core.mBoundaryConditions.emplace_back(make_shared<ConcentrateSpring>(Spring2));
 	
 	core.solve();
 	
