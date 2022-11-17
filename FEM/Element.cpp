@@ -227,8 +227,8 @@ void Element_1D_Beam::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basi
 	std::shared_ptr<BasisFunction_1D_Hermite> pBasis = std::dynamic_pointer_cast<BasisFunction_1D_Hermite>(basis);
 	for (int i = 0; i < nGauss; i++)
 	{
-		Eigen::VectorXd xi(1);
-		xi << quadrature->mXi[i];
+		Eigen::VectorXd xi(2);
+		xi << quadrature->mXi[i], mLength;
 		d2N = pBasis->getd2N(xi);
 		Ke += w(i) * d2N * d2N.transpose();
 	}
@@ -244,12 +244,12 @@ void Element_1D_Beam::computeMassMatrix(std::shared_ptr<BasisFunction> basis, st
 	Eigen::MatrixXd Me = Eigen::MatrixXd::Zero(nDof, nDof);
 	for (int i = 0; i < nGauss; i++)
 	{
-		Eigen::VectorXd xi(1);
-		xi << quadrature->mXi[i];
+		Eigen::VectorXd xi(2);
+		xi << quadrature->mXi[i], mLength;
 		N = basis->getN(xi);
 		Me += w(i) * N * N.transpose();
 	}
-	mKe = mat->GetDensity() * mSectionArea * mLength / 2. * Me;
+	mMe = mat->GetDensity() * mSectionArea * mLength / 2. * Me;
 }
 
 void Element_1D_Beam::computeInternalForce(std::shared_ptr<BasisFunction> basis, int outputNumber, std::shared_ptr<Material> mat)

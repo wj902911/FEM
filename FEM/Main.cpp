@@ -63,7 +63,7 @@ double Simpson(Eigen::VectorXd as, Eigen::VectorXd bs, Eigen::VectorXd fas, Eige
 
 int main()
 {
-	int nElements = 8;
+	int nElements = 16;
 	int elementOrder = 3;
 	//int outputNumber = 20;
 	//outputNumber += 1;
@@ -92,7 +92,7 @@ int main()
 	
 	BasisFunction_1D_Hermite basisFunction;
 	core.mBasisFunctions.emplace_back(make_shared<BasisFunction_1D_Hermite>(basisFunction));
-	for (int i = 0; i < 2 * nElements; i++)
+	for (int i = 0; i < nElements; i++)
 	{
 		Eigen::VectorXd x(1);
 		x << i * h;
@@ -103,32 +103,35 @@ int main()
 	}
 	core.mNodes[0]->fixDof();
 	Eigen::VectorXd x(1);
-	x << 2. * L;
+	x << L;
 	Eigen::VectorXi isFixed(2);
 	isFixed << 0, 0;
-	Node node(2 * nElements, 1, x, isFixed, 1);
+	Node node(nElements, 1, x, isFixed, 1);
 	core.mNodes.emplace_back(make_shared<Node>(node));
 
-	for (int i = 0; i < 2 * nElements; i++)
+	for (int i = 0; i < nElements; i++)
 	{
-		Element_1D_Beam element(i, 0, A, I, Eigen::Vector2i(i, i + 1), 0, 1);
+		Element_1D_Beam element(i, 0, A, I, Eigen::Vector2i(i, i + 1));
 		core.mElements.emplace_back(make_shared<Element_1D_Beam>(element));
+		EvenlyDistributedSpring Spring(i, i, kf);
+		core.mBoundaryConditions.emplace_back(make_shared<EvenlyDistributedSpring>(Spring));
 	}
 	
-	ConcentrateSpring Spring1(0, 0, k1);
-	core.mBoundaryConditions.emplace_back(make_shared<ConcentrateSpring>(Spring1));
+	core.solveForFrequency();
 	
-	core.solve();
-	
-	cout << core.mK << endl;
-	cout << endl;
-	cout << core.mF << endl;
+	cout.precision(12);
+
+	//cout << Eigen::MatrixXd(core.mK) << endl;
+	//cout << endl;
+	//cout << Eigen::MatrixXd(core.mM) << endl;
+	//cout << endl;
+	cout << core.mNaturalFrequencies << endl;
 	cout << endl;
 	//Eigen::VectorXd F = core.mF;
 	//F(nElements) += core.mUUnknown(nElements) * k;
 	//cout << "Sapp = " << 0.5 * core.mUUnknown.dot(F) << endl;
 	//cout << endl;
-	
+	/*
 	int nSegments = 40;
 	Eigen::VectorXd as(nSegments);
 	Eigen::VectorXd bs(nSegments);
@@ -160,6 +163,8 @@ int main()
 	double L2Norm = log(sqrt(Simpson(as, bs, fas, fab2s, fbs)));
 	cout << "ln(L2Norm) = " << L2Norm << endl;
 	cout << endl;
+	*/
+	
 	
 	/*
 	for (int i = 0; i < nSegments; i++)
@@ -197,7 +202,7 @@ int main()
 	}
 	*/
 	
-#if 1
+#if 0
 	std::ofstream uOut("u.txt");
 	std::ofstream uexOut("uex.txt");
 	std::ofstream fOut("f.txt");

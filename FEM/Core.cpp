@@ -211,6 +211,10 @@ void Core::computeStiffMatrix()
 
 void Core::computeMassMatrix()
 {
+	for (auto& pElement : mElements)
+	{
+		pElement->computeMassMatrix(mBasisFunctions[pElement->mBasisFunctionIndex], mQuadratures[pElement->mQuadratureIndex], mMaterials[pElement->mMaterialIndex]);
+	}
 	TripletArray Mijs;
 	for (auto& pElement : mElements)
 	{
@@ -309,8 +313,10 @@ void Core::solveForFrequency()
 
 void Core::computeNaturalFrequency()
 {
-	Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::SparseMatrix<double>> es(mK, mM);
-	mNaturalFrequencies = es.eigenvalues();
+	Eigen::MatrixXd dmK = Eigen::MatrixXd(mK);
+	Eigen::MatrixXd dmM = Eigen::MatrixXd(mM);
+	Eigen::GeneralizedSelfAdjointEigenSolver<Eigen::MatrixXd> es(dmK, dmM);
+	mNaturalFrequencies = sqrt(es.eigenvalues().array());
 }
 
 void Core::solveForUnknownU()

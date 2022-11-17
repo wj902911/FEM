@@ -161,8 +161,8 @@ Eigen::MatrixXd EvenlyDistributedSpring::getStiffnessMatrix(std::shared_ptr<Basi
 	Eigen::MatrixXd Kbc = Eigen::MatrixXd::Zero(n + 1, n + 1);
 	for (int i = 0; i < nGauss; i++)
 	{
-		Eigen::VectorXd xi(1);
-		xi << quadrature->mXi[i];
+		Eigen::VectorXd xi(2);
+		xi << quadrature->mXi[i], elementLength;
 		N = basis->getN(xi);
 		Kbc += w(i) * N * N.transpose();
 	}
