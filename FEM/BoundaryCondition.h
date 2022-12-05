@@ -124,6 +124,22 @@ public:
 	                                           double elementLength);
 };
 
+class EvenlyDistributedSpring_2D : public EvenlyDistributedSpring
+{
+public:
+	EvenlyDistributedSpring_2D(int index, int elementIndex, double k, int dir, int orentationSign, double valueOfFixDir);
+	~EvenlyDistributedSpring_2D();
+
+	virtual Eigen::MatrixXd getStiffnessMatrix(std::shared_ptr<BasisFunction> basis,
+		std::shared_ptr<Quadrature> quadrature,
+		Eigen::MatrixXd cords);
+
+	int mDir, mOrentationSign;
+	double mValueOfFixDir;
+};
+
+
+
 /*
 class EvenlyDistributedSpring_1st : public EvenlyDistributedSpring
 {

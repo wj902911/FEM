@@ -1,5 +1,6 @@
 #include "Element.h"
 #include <iostream>
+#include <eigen/Eigen/LU>
 
 Element::Element(int index, int materialIndex, int basisFunctionIndex, int quadratureIndex)
 {
@@ -37,17 +38,23 @@ Element_1D::~Element_1D()
 {
 }
 
+void Element_1D::evaluate(Eigen::MatrixXd cords,
+	std::shared_ptr<BasisFunction> basis,
+	std::shared_ptr<Quadrature> quadrature)
+{
+}
+
 void Element_1D::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
 {
 	int n = basis->mOrder;
-	int nGauss = quadrature->mXi.size();
+	int nGauss = quadrature->mPoints.rows();
 	Eigen::VectorXd w = quadrature->mWeight;
 	Eigen::VectorXd dN;
 	Eigen::MatrixXd Ke = Eigen::MatrixXd::Zero(n + 1, n + 1);
 	for (int i = 0; i < nGauss; i++)
 	{
 		Eigen::VectorXd xi(1);
-		xi << quadrature->mXi[i];
+		xi << quadrature->mPoints(i, 0);
 		dN = basis->getdN(xi);
 		Ke += w(i) * dN * dN.transpose();
 	}
@@ -59,14 +66,14 @@ void Element_1D::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, st
 void Element_1D::computeMassMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
 {
 	int n = basis->mOrder;
-	int nGauss = quadrature->mXi.size();
+	int nGauss = quadrature->mPoints.rows();
 	Eigen::VectorXd w = quadrature->mWeight;
 	Eigen::VectorXd N;
 	Eigen::MatrixXd Me = Eigen::MatrixXd::Zero(n + 1, n + 1);
 	for (int i = 0; i < nGauss; i++)
 	{
 		Eigen::VectorXd xi(1);
-		xi << quadrature->mXi[i];
+		xi << quadrature->mPoints(i, 0);
 		N = basis->getN(xi);
 		Me += w(i) * N * N.transpose();
 	}
@@ -97,19 +104,19 @@ void Element_1D::computeInternalForce(std::shared_ptr<BasisFunction> basis, int 
 	}
 }
 
-double Element_1D::getU(double xi, std::shared_ptr<BasisFunction> basis)
+double Element_1D::getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
 {
-	Eigen::VectorXd x(1);
-	x << xi;
-	Eigen::VectorXd phi = basis->getN(x);
+	//Eigen::VectorXd x(1);
+	//x << xi;
+	Eigen::VectorXd phi = basis->getN(xi);
 	return phi.transpose() * mNodalU;
 }
 
-double Element_1D::getdU(double xi, std::shared_ptr<BasisFunction> basis)
+double Element_1D::getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
 {
-	Eigen::VectorXd x(1);
-	x << xi;
-	Eigen::VectorXd dphi = basis->getdN(x);
+	//Eigen::VectorXd x(1);
+	//x << xi;
+	Eigen::VectorXd dphi = basis->getdN(xi);
 	return 2.0 / mLength * dphi.transpose() * mNodalU;
 }
 
@@ -124,10 +131,16 @@ Element_1D_ununiformSection::~Element_1D_ununiformSection()
 {
 }
 
+void Element_1D_ununiformSection::evaluate(Eigen::MatrixXd cords,
+	std::shared_ptr<BasisFunction> basis,
+	std::shared_ptr<Quadrature> quadrature)
+{
+}
+
 void Element_1D_ununiformSection::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
 {
 	int n = basis->mOrder;
-	int nGauss = quadrature->mXi.size();
+	int nGauss = quadrature->mPoints.rows();
 	Eigen::VectorXd w = quadrature->mWeight;
 	Eigen::VectorXd dN;
 	Eigen::MatrixXd Ke = Eigen::MatrixXd::Zero(n + 1, n + 1);
@@ -135,7 +148,7 @@ void Element_1D_ununiformSection::computeStiffnessMatrix(std::shared_ptr<BasisFu
 	for (int i = 0; i < nGauss; i++)
 	{
 		Eigen::VectorXd xi(1);
-		xi << quadrature->mXi[i];
+		xi << quadrature->mPoints(i, 0);
 		dN = basis->getdN(xi);
 		Eigen::VectorXd X(1);
 		X << x(i);
@@ -147,7 +160,7 @@ void Element_1D_ununiformSection::computeStiffnessMatrix(std::shared_ptr<BasisFu
 void Element_1D_ununiformSection::computeMassMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
 {
 	int n = basis->mOrder;
-	int nGauss = quadrature->mXi.size();
+	int nGauss = quadrature->mPoints.rows();
 	Eigen::VectorXd w = quadrature->mWeight;
 	Eigen::VectorXd N;
 	Eigen::MatrixXd Me = Eigen::MatrixXd::Zero(n + 1, n + 1);
@@ -155,7 +168,7 @@ void Element_1D_ununiformSection::computeMassMatrix(std::shared_ptr<BasisFunctio
 	for (int i = 0; i < nGauss; i++)
 	{
 		Eigen::VectorXd xi(1);
-		xi << quadrature->mXi[i];
+		xi << quadrature->mPoints(i, 0);
 		N = basis->getN(xi);
 		Eigen::VectorXd X(1);
 		X << x(i);
@@ -190,19 +203,19 @@ void Element_1D_ununiformSection::computeInternalForce(std::shared_ptr<BasisFunc
 	}
 }
 
-double Element_1D_ununiformSection::getU(double xi, std::shared_ptr<BasisFunction> basis)
+double Element_1D_ununiformSection::getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
 {
-	Eigen::VectorXd x(1);
-	x << xi;
-	Eigen::VectorXd phi = basis->getN(x);
+	//Eigen::VectorXd x(1);
+	//x << xi;
+	Eigen::VectorXd phi = basis->getN(xi);
 	return phi.transpose() * mNodalU;
 }
 
-double Element_1D_ununiformSection::getdU(double xi, std::shared_ptr<BasisFunction> basis)
+double Element_1D_ununiformSection::getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
 {
-	Eigen::VectorXd x(1);
-	x << xi;
-	Eigen::VectorXd dphi = basis->getdN(x);
+	//Eigen::VectorXd x(1);
+	//x << xi;
+	Eigen::VectorXd dphi = basis->getdN(xi);
 	return 2.0 / mLength * dphi.transpose() * mNodalU;
 }
 
@@ -217,10 +230,14 @@ Element_1D_Beam::~Element_1D_Beam()
 {
 }
 
+void Element_1D_Beam::evaluate(Eigen::MatrixXd cords, std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature)
+{
+}
+
 void Element_1D_Beam::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
 {
 	int nDof = basis->mNumDofEachNode.sum();
-	int nGauss = quadrature->mXi.size();
+	int nGauss = quadrature->mPoints.rows();
 	Eigen::VectorXd w = quadrature->mWeight;
 	Eigen::VectorXd d2N;
 	Eigen::MatrixXd Ke = Eigen::MatrixXd::Zero(nDof, nDof);
@@ -228,7 +245,7 @@ void Element_1D_Beam::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basi
 	for (int i = 0; i < nGauss; i++)
 	{
 		Eigen::VectorXd xi(2);
-		xi << quadrature->mXi[i], mLength;
+		xi << quadrature->mPoints(i, 0), mLength;
 		d2N = pBasis->getd2N(xi);
 		Ke += w(i) * d2N * d2N.transpose();
 	}
@@ -238,14 +255,14 @@ void Element_1D_Beam::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basi
 void Element_1D_Beam::computeMassMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
 {
 	int nDof = basis->mNumDofEachNode.sum();
-	int nGauss = quadrature->mXi.size();
+	int nGauss = quadrature->mPoints.rows();
 	Eigen::VectorXd w = quadrature->mWeight;
 	Eigen::VectorXd N;
 	Eigen::MatrixXd Me = Eigen::MatrixXd::Zero(nDof, nDof);
 	for (int i = 0; i < nGauss; i++)
 	{
 		Eigen::VectorXd xi(2);
-		xi << quadrature->mXi[i], mLength;
+		xi << quadrature->mPoints(i, 0), mLength;
 		N = basis->getN(xi);
 		Me += w(i) * N * N.transpose();
 	}
@@ -256,12 +273,78 @@ void Element_1D_Beam::computeInternalForce(std::shared_ptr<BasisFunction> basis,
 {
 }
 
-double Element_1D_Beam::getU(double xi, std::shared_ptr<BasisFunction> basis)
+double Element_1D_Beam::getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
 {
 	return 0.0;
 }
 
-double Element_1D_Beam::getdU(double xi, std::shared_ptr<BasisFunction> basis)
+double Element_1D_Beam::getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
+{
+	return 0.0;
+}
+
+Element_2D_Membrane::Element_2D_Membrane(int index, int materailIndex, Eigen::VectorXi endNodeIndex, int basisFunctionIndex, int quadratureIndex) :Element(index, materailIndex, basisFunctionIndex, quadratureIndex)
+{
+	mEndNodeIndex = endNodeIndex;
+}
+
+Element_2D_Membrane::~Element_2D_Membrane()
+{
+}
+
+void Element_2D_Membrane::evaluate(Eigen::MatrixXd cords, std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature)
+{
+	mNodalCoordinates = cords;
+	int nGauss = quadrature->mPoints.rows();
+	int nShapeF = basis->mNumFunctions;
+	mValues.resize(nShapeF, nGauss);
+	mDerivatives.resize(nShapeF * 2, nGauss);
+	mMp.resize(4, nGauss);
+	for (int i = 0; i < nGauss; i++)
+	{
+		mValues.col(i) = basis->getN(quadrature->mPoints.row(i));
+		mDerivatives.col(i) = basis->getdN(quadrature->mPoints.row(i));
+		mMp.col(i) = (mDerivatives.col(i).reshaped(2, nShapeF) * cords).reshaped(4, 1);
+		//std::cout << mMp.col(i) << std::endl;
+		//std::cout << std::endl;
+	}
+}
+
+void Element_2D_Membrane::computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
+{
+	int nGauss = quadrature->mPoints.rows();
+	int nShapeF = basis->mNumFunctions;
+	Eigen::VectorXd w = quadrature->mWeight;
+	Eigen::MatrixXd Ke = Eigen::MatrixXd::Zero(nShapeF, nShapeF);
+	for (int i = 0; i < nGauss; i++)
+	{
+		Eigen::Matrix2d J = mMp.col(i).reshaped(2, 2).transpose();
+		Eigen::Matrix2d Jinv = J.inverse();
+		Eigen::MatrixXd dN = mDerivatives.col(i).reshaped(2, nShapeF).transpose();
+		//Eigen::MatrixXd temp = (dN.col(0) * Jinv(0, 0) + dN.col(1) * Jinv(1, 0)) * (dN.col(0).transpose() * Jinv(0, 0) + dN.col(1).transpose() * Jinv(1, 0))
+		//	                 + (dN.col(0) * Jinv(0, 1) + dN.col(1) * Jinv(1, 1)) * (dN.col(0).transpose() * Jinv(0, 1) + dN.col(1).transpose() * Jinv(1, 1));
+		Eigen::MatrixXd dNdx = dN * Jinv;
+		//Ke += w(i) * mat->GetT() * temp * J.determinant();
+		Ke += w(i) * dNdx * mat->GetT() * dNdx.transpose() * J.determinant();
+	}
+	mKe = Ke;
+	//std::cout << Ke << std::endl;
+}
+
+void Element_2D_Membrane::computeMassMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, std::shared_ptr<Material> mat)
+{
+}
+
+void Element_2D_Membrane::computeInternalForce(std::shared_ptr<BasisFunction> basis, int outputNumber, std::shared_ptr<Material> mat)
+{
+}
+
+double Element_2D_Membrane::getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
+{
+	return basis->getN(xi).transpose() * mNodalU;
+}
+
+double Element_2D_Membrane::getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis)
 {
 	return 0.0;
 }

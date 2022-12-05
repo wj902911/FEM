@@ -1,4 +1,5 @@
 #include "BoundaryCondition.h"
+#include <iostream>
 
 BoundaryCondition::BoundaryCondition(int index, BoundaryConditionType type, int BearerIndex, double value)
 {
@@ -155,16 +156,52 @@ EvenlyDistributedSpring::~EvenlyDistributedSpring()
 Eigen::MatrixXd EvenlyDistributedSpring::getStiffnessMatrix(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, double elementLength)
 {
 	int n = basis->mOrder;
-	int nGauss = quadrature->mXi.size();
+	int nGauss = quadrature->mPoints.rows();
 	Eigen::VectorXd w = quadrature->mWeight;
 	Eigen::VectorXd N;
 	Eigen::MatrixXd Kbc = Eigen::MatrixXd::Zero(n + 1, n + 1);
 	for (int i = 0; i < nGauss; i++)
 	{
 		Eigen::VectorXd xi(2);
-		xi << quadrature->mXi[i], elementLength;
+		xi << quadrature->mPoints.row(i), elementLength;
 		N = basis->getN(xi);
 		Kbc += w(i) * N * N.transpose();
 	}
 	return Kbc * mValue * elementLength / 2.;
+}
+
+EvenlyDistributedSpring_2D::EvenlyDistributedSpring_2D(int index, int elementIndex, double k, int boundDir, int orentationSign, double valueOfFixDir) :EvenlyDistributedSpring(index, elementIndex, k)
+{
+	mDir = boundDir;
+	mOrentationSign = orentationSign;
+	mValueOfFixDir = valueOfFixDir;
+}
+
+EvenlyDistributedSpring_2D::~EvenlyDistributedSpring_2D()
+{
+}
+
+Eigen::MatrixXd EvenlyDistributedSpring_2D::getStiffnessMatrix(std::shared_ptr<BasisFunction> basis, 
+	std::shared_ptr<Quadrature> quadrature, 
+	Eigen::MatrixXd cords)
+{
+	//int n = basis->mOrder;
+	int nGauss = quadrature->mPoints.rows();
+	int nShapeF = basis->mNumFunctions;
+	Eigen::VectorXd w = quadrature->mWeight;
+	Eigen::VectorXd N;
+	Eigen::MatrixXd Kbc = Eigen::MatrixXd::Zero(nShapeF, nShapeF);
+	for (int i = 0; i < nGauss; i++)
+	{
+		Eigen::Vector2d xi(0, 0);
+		xi(mDir) = quadrature->mPoints(i,0);
+		xi(!mDir) = mValueOfFixDir;
+		Eigen::Matrix2d J = (basis->getdN(xi).reshaped(2, nShapeF) * cords).transpose();
+		Eigen::VectorXd g = J.col(mDir);
+		//std::cout << g.norm() << std::endl;
+		N = basis->getN(xi);
+		Kbc += w(i) * N * N.transpose() * mOrentationSign * g.norm();
+	}
+	//std::cout << Kbc * mValue << std::endl;
+	return Kbc * mValue;
 }

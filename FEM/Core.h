@@ -32,8 +32,8 @@ public:
 	void solveForUnknownU();
 	void assignU();
 	void computeInternalForce();
-	double getU(double x);
-	double getdU(double x);
+	double getU(Eigen::VectorXd x);
+	double getdU(Eigen::VectorXd x);
 	void setDimension(int dimension);
 	
 	vector<shared_ptr<Node>> mNodes;
@@ -50,6 +50,6 @@ public:
 	Eigen::VectorXd mNaturalFrequencies;
 	int mNDof_unkonwn, mNDof_konwn, mNDof_all;
 	int mOutputNumber;
-	int mDim;
+	//int mDim;
 };
 

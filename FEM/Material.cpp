@@ -5,6 +5,7 @@ Material::Material()
 	mE = 0;
 	mNu = 0;
 	mDensity = 0;
+	mT = 0;
 }
 
 Material::~Material()
@@ -26,6 +27,11 @@ void Material::SetDensity(double Density)
 	mDensity = Density;
 }
 
+void Material::SetT(double T)
+{
+	mT = T;
+}
+
 double Material::GetE()
 {
 	return mE;
@@ -39,4 +45,9 @@ double Material::GetNu()
 double Material::GetDensity()
 {
 	return mDensity;
+}
+
+double Material::GetT()
+{
+	return mT;
 }

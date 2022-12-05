@@ -104,14 +104,14 @@ void Core::assignDofIndexes()
 			for (auto& pElIdix : pNode->mElementIndices)
 			{
 				std::shared_ptr<Element> pElement = mElements[pElIdix];
+				Eigen::Index orderOfDof = 0;
 				//std::shared_ptr<Element_1D> pElement = std::dynamic_pointer_cast<Element_1D>(mElements[pElIdix]);
-				if (pElement->mEndNodeIndex(0) == nodeIndex)
+				for (int i = 0; i < pElement->mEndNodeIndex.size(); i++)
 				{
-					pElement->mDofIndexes(0) = n + m;
-				}
-				else
-				{
-					pElement->mDofIndexes(1) = n + m;
+					if (pElement->mEndNodeIndex(i) == nodeIndex)
+						pElement->mDofIndexes(orderOfDof + dir) = n + m;
+					else
+						orderOfDof += mBasisFunctions[pElement->mBasisFunctionIndex]->mNumDofEachNode[i];
 				}
 			}
 			m++;
@@ -127,24 +127,29 @@ void Core::assignDofIndexes()
 	mNDof_konwn = m;
 	mNDof_all = n + m;
 
-	//for (auto& pEle : mElements)
-	//{
-	//	std::cout << pEle->mDofIndexes << std::endl;
-	//	std::cout << std::endl;
-	//}
+	/*
+	for (auto& pEle : mElements)
+	{
+		std::cout << pEle->mDofIndexes << std::endl;
+		std::cout << std::endl;
+	}
+	*/
 }
 
 void Core::computeStiffMatrix()
 {
 	for (auto& pElement : mElements)
 	{
-		int N1 = pElement->mEndNodeIndex(0);
-		int N3 = pElement->mEndNodeIndex(pElement->mEndNodeIndex.size() - 1);
-
-		double h = abs(mNodes[N3]->mX(0) - mNodes[N1]->mX(0));
-		//std::shared_ptr<Element_1D> pElement_1D = std::dynamic_pointer_cast<Element_1D>(pElement);
-		pElement->mLength = h;
-		
+		Eigen::MatrixXd cords;
+		int nNode = pElement->mEndNodeIndex.size();
+		int geoDim = mNodes[pElement->mEndNodeIndex(0)]->mX.size();
+		cords.resize(nNode, geoDim);
+		for (int i = 0; i < nNode; i++)
+		{
+			int nodeIndex = pElement->mEndNodeIndex(i);
+			cords.row(i) = mNodes[nodeIndex]->mX;
+		}
+		pElement->evaluate(cords, mBasisFunctions[pElement->mBasisFunctionIndex], mQuadratures[pElement->mQuadratureIndex]);
 		pElement->computeStiffnessMatrix(mBasisFunctions[pElement->mBasisFunctionIndex], mQuadratures[pElement->mQuadratureIndex], mMaterials[pElement->mMaterialIndex]);
 	}
 	TripletArray Kijs;
@@ -177,14 +182,14 @@ void Core::computeStiffMatrix()
 		}
 		else if (pBC->mType == BoundaryConditionType::SPRING_DISTRIBUTED)
 		{
-			std::shared_ptr<EvenlyDistributedSpring> pSpring = std::dynamic_pointer_cast<EvenlyDistributedSpring>(pBC);
+			std::shared_ptr<EvenlyDistributedSpring_2D> pSpring = std::dynamic_pointer_cast<EvenlyDistributedSpring_2D>(pBC);
 			int elementIndex = pSpring->mBearerIndex;
 			std::shared_ptr<Element> pElement = mElements[elementIndex];
 			//std::shared_ptr<Element_1D> pElement = std::dynamic_pointer_cast<Element_1D>(mElements[elementIndex]);
 			std::shared_ptr<BasisFunction> pBasisFunction = mBasisFunctions[pElement->mBasisFunctionIndex];
-			std::shared_ptr<Quadrature> pQuadrature = mQuadratures[pElement->mQuadratureIndex];
-			double eleLength = pElement->mLength;
-			Eigen::MatrixXd k = pSpring->getStiffnessMatrix(pBasisFunction, pQuadrature, eleLength);
+			std::shared_ptr<Quadrature> pQuadrature = mQuadratures[pElement->mQuadratureIndex + 1];
+			//double eleLength = pElement->mLength;
+			Eigen::MatrixXd k = pSpring->getStiffnessMatrix(pBasisFunction, pQuadrature, pElement->mNodalCoordinates);
 			int numDofs = pElement->mDofIndexes.size();
 			for (int i = 0; i < numDofs; i++)
 			{
@@ -248,11 +253,9 @@ void Core::computeLoadVector()
 	{
 		for (auto& pElement : mElements)
 		{
-			Eigen::Vector2d nodalCoordinates(mNodes[pElement->mEndNodeIndex[0]]->mX(0),
-				                             mNodes[pElement->mEndNodeIndex[pElement->mEndNodeIndex.size() - 1]]->mX(0));
 			Eigen::VectorXd f = pBdForce->getElementLoadVector(mBasisFunctions[pElement->mBasisFunctionIndex],
 				                                               mQuadratures[pElement->mQuadratureIndex],
-				                                               nodalCoordinates);
+															   pElement->mNodalCoordinates);
 			for (int i = 0; i < pElement->mDofIndexes.size(); i++)
 			{
 				int m = pElement->mDofIndexes(i);
@@ -338,7 +341,7 @@ void Core::assignU()
 		for (int i = 0; i < pNode->mDofIndex.size(); i++)
 		{
 			int dofIndex = pNode->mDofIndex(i);
-			if (dofIndex >= 0)
+			if (dofIndex >= 0 && dofIndex < mUUnknown.size())
 			{
 				pNode->mU(i) = mUUnknown(dofIndex);
 			}
@@ -349,7 +352,7 @@ void Core::assignU()
 		int n = pElement->mEndNodeIndex.size();
 		for (int i = 0; i < n; i++)
 		{
-			for (int j = 0; j < mNodes[pElement->mEndNodeIndex(i)]->mU.size(); i++)
+			for (int j = 0; j < mNodes[pElement->mEndNodeIndex(i)]->mU.size(); j++)
 			{
 				pElement->mNodalU(i) = mNodes[pElement->mEndNodeIndex(i)]->mU(j);
 			}
@@ -373,26 +376,28 @@ void Core::computeInternalForce()
 	}
 }
 
-double Core::getU(double x)
+double Core::getU(Eigen::VectorXd x)
 {
 	double u = 0;
 	for (auto& pElement : mElements)
 	{
 		int n = pElement->mEndNodeIndex.size();
-		double xmin = mNodes[pElement->mEndNodeIndex[0]]->mX(0);
-		double xmax = mNodes[pElement->mEndNodeIndex[n - 1]]->mX(0);
-		if (x >= xmin && x <= xmax)
+		Eigen::VectorXd min = pElement->mNodalCoordinates.colwise().minCoeff();
+		Eigen::VectorXd max = pElement->mNodalCoordinates.colwise().maxCoeff();
+		if (x(0) >= min(0) && x(0) <= max(0))
 		{
-			//std::shared_ptr<Element_1D> pElement_1D = std::dynamic_pointer_cast<Element_1D>(pElement);
-			double xi = (2.0 * x - xmin - xmax) / pElement->mLength;
-			u = pElement->getU(xi, mBasisFunctions[pElement->mBasisFunctionIndex]);
-			break;
+			if (x(1) >= min(1) && x(1) <= max(1))
+			{
+				//double xi = (2.0 * x - xmin - xmax) / pElement->mLength;
+				//u = pElement->getU(xi, mBasisFunctions[pElement->mBasisFunctionIndex]);
+				break;
+			}
 		}
 	}
 	return u;
 }
 
-double Core::getdU(double x)
+double Core::getdU(Eigen::VectorXd x)
 {
 	double du = 0;
 	for (auto& pElement : mElements)
@@ -400,11 +405,11 @@ double Core::getdU(double x)
 		int n = pElement->mEndNodeIndex.size();
 		double xmin = mNodes[pElement->mEndNodeIndex[0]]->mX(0);
 		double xmax = mNodes[pElement->mEndNodeIndex[n - 1]]->mX(0);
-		if (x >= xmin && x <= xmax)
+		if (x(0) >= xmin && x(0) <= xmax)
 		{
 			//std::shared_ptr<Element_1D> pElement_1D = std::dynamic_pointer_cast<Element_1D>(pElement);
-			double xi = (2.0 * x - xmin - xmax) / pElement->mLength;
-			du = pElement->getdU(xi, mBasisFunctions[pElement->mBasisFunctionIndex]);
+			//double xi = (2.0 * x - xmin - xmax) / pElement->mLength;
+			//du = pElement->getdU(xi, mBasisFunctions[pElement->mBasisFunctionIndex]);
 			break;
 		}
 	}
@@ -413,5 +418,5 @@ double Core::getdU(double x)
 
 void Core::setDimension(int dimension)
 {
-	mDim = dimension;
+	//mDim = dimension;
 }

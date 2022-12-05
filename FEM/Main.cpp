@@ -87,9 +87,11 @@ int main()
 	material.SetDensity(Rho);
 	core.mMaterials.emplace_back(make_shared<Material>(material));
 
+	//need both 1D and 2D
 	Quadrature quadrature_1D(1, elementOrder);
 	core.mQuadratures.emplace_back(make_shared<Quadrature>(quadrature_1D));
 	
+	//need to change dof on each node
 	BasisFunction_1D_Hermite basisFunction;
 	core.mBasisFunctions.emplace_back(make_shared<BasisFunction_1D_Hermite>(basisFunction));
 	for (int i = 0; i < nElements; i++)

@@ -1,10 +1,11 @@
 #pragma once
 
 #include <eigen/Eigen/Core>
+#include <iostream>
 
 struct Quadrature
 {
-	Eigen::VectorXd mXi;
+	Eigen::MatrixXd mPoints;
 	Eigen::VectorXd mWeight;
 	//int mDim;
 
@@ -14,42 +15,42 @@ struct Quadrature
 		{
 			if (mOrder == 1)
 			{
-				mXi.resize(3);
-				mWeight.resize(3);
-				mXi << -sqrt(3. / 5.), 0, sqrt(3. / 5.);
-				mWeight << 0.555555555555556, 0.888888888888889, 0.555555555555556;
+				mPoints.resize(2, 1);
+				mWeight.resize(2);
+				mPoints << -sqrt(1. / 3.), sqrt(1. / 3.);
+				mWeight << 1., 1.;
 			}
 			else if (mOrder == 2)
 			{
-				mXi.resize(4);
-				mWeight.resize(4);
-				mXi << -sqrt(3. / 7. + 2. / 7. * sqrt(6. / 5.)), -sqrt(3. / 7. - 2. / 7. * sqrt(6. / 5.)), sqrt(3. / 7. - 2. / 7. * sqrt(6. / 5.)), sqrt(3. / 7. + 2. / 7. * sqrt(6. / 5.));
-				mWeight << (18. - sqrt(30.)) / 36., (18. + sqrt(30.)) / 36., (18. + sqrt(30.)) / 36., (18. - sqrt(30.)) / 36.;
+				mPoints.resize(3, 1);
+				mWeight.resize(3);
+				mPoints << -sqrt(3. / 5.), 0, sqrt(3. / 5.);
+				mWeight << 0.555555555555556, 0.888888888888889, 0.555555555555556;
 			}
 			else if (mOrder == 3)
 			{
-				mXi.resize(5);
-				mWeight.resize(5);
-				mXi << -sqrt(5. + 2. * sqrt(10. / 7.)) / 3., -sqrt(5. - 2. * sqrt(10. / 7.)) / 3., 0, sqrt(5. - 2. * sqrt(10. / 7.)) / 3., sqrt(5. + 2. * sqrt(10. / 7.)) / 3.;
-				mWeight << (322. - 13. * sqrt(70.)) / 900., (322. + 13. * sqrt(70.)) / 900., 128. / 225., (322. + 13. * sqrt(70.)) / 900., (322. - 13. * sqrt(70.)) / 900.;
+				mPoints.resize(4, 1);
+				mWeight.resize(4);
+				mPoints << -sqrt(3. / 7. + 2. / 7. * sqrt(6. / 5.)), -sqrt(3. / 7. - 2. / 7. * sqrt(6. / 5.)), sqrt(3. / 7. - 2. / 7. * sqrt(6. / 5.)), sqrt(3. / 7. + 2. / 7. * sqrt(6. / 5.));
+				mWeight << (18. - sqrt(30.)) / 36., (18. + sqrt(30.)) / 36., (18. + sqrt(30.)) / 36., (18. - sqrt(30.)) / 36.;
 			}
 		}
 		else if (mDim == 2)
 		{
-			mXi.resize(8);
+			mPoints.resize(4,2);
 			mWeight.resize(4);
-			mXi << -1. / sqrt(3.), -1. / sqrt(3.), 
-				    1. / sqrt(3.), -1. / sqrt(3.),
-				    1. / sqrt(3.),  1. / sqrt(3.), 
-				   -1. / sqrt(3.),  1. / sqrt(3.);
+			mPoints << -1. / sqrt(3.), -1. / sqrt(3.),
+				        1. / sqrt(3.), -1. / sqrt(3.),
+				        1. / sqrt(3.),  1. / sqrt(3.), 
+				       -1. / sqrt(3.),  1. / sqrt(3.);
 			mWeight << 1., 1., 1., 1.;
 			
 		}
 		else if (mDim == 3)
 		{
-			mXi.resize(24);
+			mPoints.resize(8, 3);
 			mWeight.resize(8);
-			mXi << -1. / sqrt(3.), -1. / sqrt(3.),  1. / sqrt(3.),
+			mPoints << -1. / sqrt(3.), -1. / sqrt(3.),  1. / sqrt(3.),
 				    1. / sqrt(3.), -1. / sqrt(3.),  1. / sqrt(3.),
 				    1. / sqrt(3.),  1. / sqrt(3.),  1. / sqrt(3.),
 				   -1. / sqrt(3.),  1. / sqrt(3.),  1. / sqrt(3.),
@@ -66,11 +67,12 @@ struct Quadrature
 	{
 	}
 
-	Eigen::VectorXd getXInPhysicalSpace(Eigen::VectorXd nodalCoordinates)
+	//Can only use in 1D
+	Eigen::MatrixXd getXInPhysicalSpace(Eigen::MatrixXd nodalCoordinates)
 	{
-		Eigen::VectorXd xiInPhysicalSpace;
-		xiInPhysicalSpace.resize(mXi.size());
-		xiInPhysicalSpace = nodalCoordinates(0) + (nodalCoordinates(1) - nodalCoordinates(0)) / 2. * (mXi.array() + 1.);
+		Eigen::MatrixXd xiInPhysicalSpace;
+		xiInPhysicalSpace.resize(mPoints.rows(), mPoints.cols());
+		xiInPhysicalSpace = nodalCoordinates(0) + (nodalCoordinates(1) - nodalCoordinates(0)) / 2. * (mPoints.array() + 1.);
 		return xiInPhysicalSpace;
 	}
 };
@@ -82,6 +84,8 @@ public:
 	~BasisFunction();
 	virtual Eigen::VectorXd getN(Eigen::VectorXd coordinates) = 0;
 	virtual Eigen::VectorXd getdN(Eigen::VectorXd coordinates) = 0;
+
+	void SetNumDofEachNode(int numDofEachNode);
 
 	int mDim;
 	int mOrder;
@@ -203,32 +207,29 @@ public:
 class BodyForceFunction : public Function
 {
 public:
-	BodyForceFunction(double value):mValue(value) { }
+	BodyForceFunction(Eigen::VectorXd value):mValue(value) { }
 	~BodyForceFunction() { }
 	
-	double getValue(Eigen::VectorXd coordinates) { return mValue; }
+	double getValue(Eigen::VectorXd coordinates) { return mValue(0) * 2. * (2 - coordinates(0) / mValue(1)); }
 
-	Eigen::VectorXd getElementLoadVector(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, Eigen::VectorXd nodalCoordinates)
+	Eigen::VectorXd getElementLoadVector(std::shared_ptr<BasisFunction> basis, std::shared_ptr<Quadrature> quadrature, Eigen::MatrixXd nodalCoordinates)
 	{
 		Eigen::VectorXd elementLoadVector;
-		elementLoadVector.resize(basis->mOrder + 1);
+		int nShapeF = basis->mNumFunctions;
+		elementLoadVector.resize(nShapeF);
 		elementLoadVector.setZero();
-		Eigen::VectorXd xInPhysicalSpace = quadrature->getXInPhysicalSpace(nodalCoordinates);
-		for (int i = 0; i < quadrature->mXi.size(); i++)
+		for (int i = 0; i < quadrature->mPoints.rows(); i++)
 		{
-			Eigen::VectorXd x;
-			x.resize(1);
-			x << xInPhysicalSpace[i];
-			Eigen::VectorXd xi;
-			xi.resize(1);
-			xi << quadrature->mXi[i];
-			elementLoadVector += quadrature->mWeight[i] * getValue(x) * basis->getN(xi);
+			Eigen::VectorXd CaussPt = quadrature->mPoints.row(i);
+			Eigen::VectorXd xInPhysicalSpace = basis->getN(CaussPt).transpose() * nodalCoordinates;
+			Eigen::Matrix2d J = (basis->getdN(CaussPt).reshaped(2, nShapeF) * nodalCoordinates).transpose();
+			elementLoadVector += quadrature->mWeight[i] * getValue(xInPhysicalSpace) * basis->getN(CaussPt) * J.determinant();
 		}
-		elementLoadVector *= (nodalCoordinates(1) - nodalCoordinates(0)) / 2.;
+		//std::cout << elementLoadVector << std::endl;
 		return elementLoadVector;
 	}
 
-	double mValue;
+	Eigen::VectorXd mValue;
 };
 
 class SextionAreaFunction : public Function

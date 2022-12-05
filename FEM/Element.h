@@ -16,6 +16,10 @@ public:
 	Element(int index, int materailIndex, int basisFunctionIndex, int quadratureIndex);
 	virtual ~Element();
 	
+	virtual void evaluate(Eigen::MatrixXd cords,
+		std::shared_ptr<BasisFunction> basis,
+		std::shared_ptr<Quadrature> quadrature) = 0;
+	
 	//virtual void getJacobian();
 	virtual void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, 
 		                                std::shared_ptr<Quadrature> quadrature, 
@@ -29,8 +33,8 @@ public:
 		                              int outputNumber, 
 		                              std::shared_ptr<Material> mat) = 0;
 	
-	virtual double getU(double xi, std::shared_ptr<BasisFunction> basis) = 0;
-	virtual double getdU(double xi, std::shared_ptr<BasisFunction> basis) = 0;
+	virtual double getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis) = 0;
+	virtual double getdU(Eigen::VectorXd, std::shared_ptr<BasisFunction> basis) = 0;
 
 	void setSize(int size);
 
@@ -41,7 +45,7 @@ public:
 	int mQuadratureIndex;
 
 	Eigen::VectorXi mEndNodeIndex;
-	Eigen::MatrixXd mKe, mMe;
+	Eigen::MatrixXd mKe, mMe, mNodalCoordinates;
 	Eigen::VectorXi mDofIndexes;
 	Eigen::VectorXd mNodalU;
 
@@ -65,6 +69,10 @@ public:
 	
 	~Element_1D();
 	
+	void evaluate(Eigen::MatrixXd cords,
+		std::shared_ptr<BasisFunction> basis,
+		std::shared_ptr<Quadrature> quadrature);
+	
 	void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, 
 		                        std::shared_ptr<Quadrature> quadrature, 
 								std::shared_ptr<Material> mat);
@@ -77,8 +85,8 @@ public:
 							  int outputNumber, 
 							  std::shared_ptr<Material> mat);
 	
-	double getU(double xi, std::shared_ptr<BasisFunction> basis);
-	double getdU(double xi, std::shared_ptr<BasisFunction> basis);
+	double getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
+	double getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
 	
 	double mSectionArea;
 	//double mLength;
@@ -97,6 +105,10 @@ public:
 	
 	~Element_1D_ununiformSection();
 
+	void evaluate(Eigen::MatrixXd cords,
+		std::shared_ptr<BasisFunction> basis,
+		std::shared_ptr<Quadrature> quadrature);
+	
 	void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis, 
 								std::shared_ptr<Quadrature> quadrature, 
 								std::shared_ptr<Material> mat);
@@ -109,8 +121,8 @@ public:
 							  int outputNumber, 
 							  std::shared_ptr<Material> mat);
 	
-	double getU(double xi, std::shared_ptr<BasisFunction> basis);
-	double getdU(double xi, std::shared_ptr<BasisFunction> basis);
+	double getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
+	double getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
 
 	std::shared_ptr<SextionAreaFunction> mSectionArea;
 	//double mLength;
@@ -130,6 +142,10 @@ public:
 
 	~Element_1D_Beam();
 
+	void evaluate(Eigen::MatrixXd cords, 
+		std::shared_ptr<BasisFunction> basis, 
+		std::shared_ptr<Quadrature> quadrature);
+	
 	void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis,
 		                        std::shared_ptr<Quadrature> quadrature,
 		                        std::shared_ptr<Material> mat);
@@ -142,8 +158,41 @@ public:
 		                      int outputNumber,
 		                      std::shared_ptr<Material> mat);
 
-	double getU(double xi, std::shared_ptr<BasisFunction> basis);
-	double getdU(double xi, std::shared_ptr<BasisFunction> basis);
+	double getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
+	double getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
 
 	double mSectionArea, mI;
+};
+
+class Element_2D_Membrane :public Element
+{
+public:
+	Element_2D_Membrane(int index,
+		int materailIndex,
+		Eigen::VectorXi endNodeIndex,
+		int basisFunctionIndex = 0,
+		int quadratureIndex = 0);
+
+	~Element_2D_Membrane();
+
+	void evaluate(Eigen::MatrixXd cords, 
+		std::shared_ptr<BasisFunction> basis, 
+		std::shared_ptr<Quadrature> quadrature);
+
+	void computeStiffnessMatrix(std::shared_ptr<BasisFunction> basis,
+		std::shared_ptr<Quadrature> quadrature,
+		std::shared_ptr<Material> mat);
+
+	void computeMassMatrix(std::shared_ptr<BasisFunction> basis,
+		std::shared_ptr<Quadrature> quadrature,
+		std::shared_ptr<Material> mat);
+
+	void computeInternalForce(std::shared_ptr<BasisFunction> basis,
+		int outputNumber,
+		std::shared_ptr<Material> mat);
+
+	double getU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
+	double getdU(Eigen::VectorXd xi, std::shared_ptr<BasisFunction> basis);
+
+	Eigen::MatrixXd mValues, mDerivatives, mMp;
 };

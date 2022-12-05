@@ -8,6 +8,11 @@ BasisFunction::~BasisFunction()
 {
 }
 
+void BasisFunction::SetNumDofEachNode(int numDofEachNode)
+{
+	mNumDofEachNode.setConstant(numDofEachNode);
+}
+
 BasisFunction_1D_Linear::BasisFunction_1D_Linear()
 {
 	mOrder = 1;
@@ -160,7 +165,7 @@ BasisFunction_2D_Quad_Linear::BasisFunction_2D_Quad_Linear()
 	mDim = 2;
 	mNumFunctions = 4;
 	mNumNodes = 4;
-	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 2);
+	mNumDofEachNode = Eigen::VectorXi::Constant(mNumNodes, 2);//sometimes 1
 }
 
 BasisFunction_2D_Quad_Linear::~BasisFunction_2D_Quad_Linear()
